@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EstateX AI Chatbot</title>
+    <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+
+
+   <script>
+    tailwind.config = {
+        darkMode: 'class', // ✅ enable dark mode support
+        theme: {
+            extend: {
+                colors: {
+                    primary: '#4f46e5',
+                    secondary: '#a5b4fc',
+                },
+                fontFamily: {
+  sans: ['Inter', 'ui-sans-serif', 'system-ui'],
+},
+            },
+        },
+    };
+</script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css" />
+    <style>
+       :where([class^="ri-"])::before { content: "\f3c2"; }
+@keyframes highlight {
+    0%, 100% { background-color: transparent; }
+    50% { background-color: rgba(79, 70, 229, 0.1); }
+}
+.highlight-message {
+    animation: highlight 2s ease-in-out;
+}
+body {
+font-family: 'Inter', sans-serif;
+min-height: 100vh;
+background: #fafafa;
+transition: background-color 0.3s ease;
+display: flex;
+flex-direction: column;
+}
+body.dark {
+background: #1a1a1a;
+color: #fff;
+}
+body.dark .bg-white {
+background-color: #2d2d2d;
+}
+body.dark header,
+body.dark footer {
+background-color: #2d2d2d;
+border-color: #404040;
+}
+body.dark .text-gray-700,
+body.dark .text-gray-600 {
+color: #d1d5db;
+}
+body.dark header a:hover,
+body.dark footer a:hover {
+color: #a5b4fc;
+}
+body.dark .bg-gray-50 {
+background-color: #363636;
+}
+body.dark .text-gray-800 {
+color: #e5e5e5;
+}
+body.dark .text-gray-500 {
+color: #9ca3af;
+}
+body.dark .text-gray-700 {
+color: #d1d5db;
+}
+body.dark .border-gray-100 {
+border-color: #404040;
+}
+body.dark .hover\:bg-gray-100:hover {
+background-color: #404040;
+}
+body.dark .bg-gray-200 {
+background-color: #4a4a4a;
+}
+body.dark .shadow-xl {
+box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4);
+}
+body.dark .shadow-sm {
+box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+}
+.chat-container::-webkit-scrollbar {
+width: 4px;
+}
+.chat-container::-webkit-scrollbar-track {
+background: transparent;
+}
+.chat-container::-webkit-scrollbar-thumb {
+background-color: rgba(229, 231, 235, 0.5);
+border-radius: 20px;
+}
+.chat-container:hover::-webkit-scrollbar-thumb {
+background-color: rgba(229, 231, 235, 0.8);
+}
+.expandable-input {
+min-height: 40px;
+max-height: 120px;
+}
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+-webkit-appearance: none;
+margin: 0;
+}
+.typing-indicator span {
+width: 8px;
+height: 8px;
+background-color: #a5b4fc;
+border-radius: 50%;
+display: inline-block;
+margin: 0 1px;
+animation: typing 1.4s infinite ease-in-out;
+}
+.typing-indicator span:nth-child(1) {
+animation-delay: 0s;
+}
+.typing-indicator span:nth-child(2) {
+animation-delay: 0.2s;
+}
+.typing-indicator span:nth-child(3) {
+animation-delay: 0.4s;
+}
+@keyframes typing {
+0%, 60%, 100% {
+transform: translateY(0);
+}
+30% {
+transform: translateY(-4px);
+}
+}
+.custom-switch {
+position: relative;
+display: inline-block;
+width: 44px;
+height: 24px;
+}
+.custom-switch input {
+opacity: 0;
+width: 0;
+height: 0;
+}
+.switch-slider {
+position: absolute;
+cursor: pointer;
+top: 0;
+left: 0;
+right: 0;
+bottom: 0;
+background-color: #e5e7eb;
+transition: .4s;
+border-radius: 34px;
+}
+.switch-slider:before {
+position: absolute;
+content: "";
+height: 18px;
+width: 18px;
+left: 3px;
+bottom: 3px;
+background-color: white;
+transition: .4s;
+border-radius: 50%;
+}
+input:checked + .switch-slider {
+background-color: #4f46e5;
+}
+input:checked + .switch-slider:before {
+transform: translateX(20px);
+}
+.animate-pulse {
+  animation: pulse 1s infinite;
+}
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+
+</style>
+    </style>
+</head>
+
+<body class="bg-gray-50 overflow-y-auto overflow-x-hidden dark:bg-gray-900 font-sans">
+    <header class="sticky top-0 z-50 w-full border-b border-gray-100 bg-white dark:bg-gray-800 shadow-sm">
+        <div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+            <!-- Logo and Brand -->
+            <div class="flex items-center space-x-3">
+    <a href="/" class="flex items-center space-x-2">
+        <!-- Light mode logo -->
+        <img src="logo2.svg" alt="EstateX Logo" class="h-8 w-auto dark:hidden">
+
+        <!-- Dark mode logo -->
+        <img src="logo.svg" alt="EstateX Logo (Dark)" class="h-8 w-auto hidden dark:inline">
+    </a>
+</div>
+    
+            <!-- Action Buttons -->
+            <div class="flex items-center space-x-4">
+                <button class="text-gray-700 hover:text-primary dark:text-white transition" id="themeToggle" title="Toggle Theme">
+                    <i class="ri-moon-line ri-xl"></i>
+                </button>
+                <button class="text-gray-700 hover:text-primary dark:text-white transition" title="Notifications">
+                    <i class="ri-notification-3-line ri-xl"></i>
+                </button>
+                <button class="text-gray-700 hover:text-primary dark:text-white transition" title="Profile">
+                    <i class="ri-user-3-line ri-xl"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+    
+
+    <main class="min-h-[calc(100vh-16rem)] py-8 px-4">
+        <div class="flex flex-col max-w-3xl mx-auto bg-white dark:bg-gray-700 shadow-xl rounded-lg overflow-hidden">
+            <!-- Chat Header -->
+            <header class="px-4 py-3 border-b border-gray-100 flex items-center justify-between bg-white dark:bg-gray-800 z-10 sticky top-0">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white">
+                       <i class="ri-twitter-x-line"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-semibold text-gray-800 dark:text-white">EstateX AI</h1>
+                        <div class="flex items-center text-xs text-green-500">
+                            <span class="w-2 h-2 bg-green-500 rounded-full mr-1.5"></span>
+                            <span>Online</span>
+                        </div>
+                    </div>
+                </div>
+               <div class="flex items-center space-x-4">
+<button id="searchButton" class="w-9 h-9 flex items-center justify-center text-gray-500 hover:bg-gray-100 rounded-full">
+<i class="ri-search-line ri-lg"></i>
+</button>
+<div id="searchModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center pt-20 z-50">
+<div class="bg-white rounded-lg p-4 max-w-lg w-full mx-4 shadow-xl">
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Search Messages</h3>
+<button id="closeSearch" class="text-gray-500 hover:text-gray-700">
+<i class="ri-close-line ri-lg"></i>
+</button>
+</div>
+<div class="relative mb-4">
+<input
+  type="text"
+  id="searchInput"
+  class="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-700 
+         rounded bg-white dark:bg-gray-800 
+         text-gray-900 dark:text-gray-100 
+         placeholder-gray-400 dark:placeholder-gray-500 
+         caret-gray-800 dark:caret-gray-100 
+         focus:outline-none focus:border-primary dark:focus:border-primary"
+  placeholder="Search messages..."
+>
+
+<i class="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+</div>
+<div id="searchResults" class="max-h-96 overflow-y-auto space-y-2"></div>
+</div>
+</div>
+<div class="relative">
+<button id="menuButton" class="w-9 h-9 flex items-center justify-center text-gray-500 hover:bg-gray-100 rounded-full">
+<i class="ri-more-2-fill ri-lg"></i>
+</button>
+<div id="menuDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded shadow-lg z-20 border border-gray-100">
+<ul class="py-1">
+<li id="clearChat" class="px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center cursor-pointer text-sm text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
+    <i class="ri-delete-bin-line mr-2 text-gray-500 dark:text-gray-400"></i>
+    <span>Clear conversation</span>
+</li>
+<li id="exportChat" class="px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center cursor-pointer text-sm text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
+    <i class="ri-download-line mr-2 text-gray-500 dark:text-gray-400"></i>
+    <span>Export chat history</span>
+</li>
+
+</li>
+</ul>
+</div>
+</div>
+</div>
+            </header>
+
+            <!-- Chat Container -->
+            <div class="chat-container flex-1 overflow-y-auto p-4 space-y-4">
+                <!-- Welcome Message -->
+                <div class="flex items-start space-x-2 max-w-[80%]">
+                    <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white flex-shrink-0">
+                        <i class="ri-twitter-x-line"></i>
+                    </div>
+                    <div>
+                        <div class="bg-gray-50 p-3 rounded-lg rounded-tl-none shadow-sm">
+                            <p class="text-gray-800">Hello! I'm your AI assistant. How can I help you today?</p>
+                        </div>
+                        <div class="text-xs text-gray-500 mt-1">10:30 AM</div>
+                    </div>
+                </div>
+                <!-- User Message Placeholder -->
+            </div>
+
+            <!-- Input Section -->
+            <div class="border-t border-gray-100 p-3 bg-white dark:bg-gray-800 sticky bottom-0">
+                <div class="flex items-end space-x-2">
+                    <div class="flex-1 bg-gray-50 dark:bg-gray-600 rounded-lg p-2 flex items-end">
+                        <textarea id="messageInput" class="expandable-input w-full bg-transparent border-none focus:outline-none resize-none px-2 py-1 text-gray-800 dark:text-white"
+                            placeholder="Type a message..."></textarea>
+                    </div>
+                    <!-- Voice Input Button -->
+<button id="voiceButton" class="w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center hover:bg-secondary/90 transition" title="Speak">
+    <i class="ri-mic-line ri-lg"></i>
+</button>
+
+                    <button id="sendButton" class="w-10 h-10 bg-primary text-white rounded-full flex items-center justify-center hover:bg-primary/90 transition">
+                        <i class="ri-send-plane-fill ri-lg"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700 mt-8">
+        <div class="mx-auto max-w-7xl px-4 py-6 flex flex-col sm:flex-row justify-between items-center text-sm text-gray-600 dark:text-gray-300">
+            <p class="text-center sm:text-left">&copy; 2025 EstateX AI. All rights reserved.</p>
+            <div class="flex space-x-4 mt-2 sm:mt-0">
+                <a href="#" class="hover:text-primary transition">Privacy</a>
+                <a href="#" class="hover:text-primary transition">Terms</a>
+                <a href="#" class="hover:text-primary transition">Contact</a>
+            </div>
+        </div>
+    </footer>
+    
+
+    <script>
+        
+        // Theme Toggle
+        const themeToggle = document.getElementById('themeToggle');
+        const body = document.body;
+        themeToggle.addEventListener('click', function () {
+            body.classList.toggle('dark');
+            localStorage.setItem('darkMode', body.classList.contains('dark'));
+        });
+    
+        // Check for saved theme preference
+        if (localStorage.getItem('darkMode') === 'true') {
+            body.classList.add('dark');
+        }
+    
+        // Handle sending the message to backend and displaying it
+        const sendButton = document.getElementById('sendButton');
+        const messageInput = document.getElementById('messageInput');
+        const chatContainer = document.querySelector('.chat-container');
+    
+        sendButton.addEventListener('click', function () {
+            sendMessage();
+        });
+    
+        messageInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+    const menuButton = document.getElementById('menuButton');
+const menuDropdown = document.getElementById('menuDropdown');
+menuButton.addEventListener('click', function() {
+menuDropdown.classList.toggle('hidden');
+});
+// Close dropdown when clicking outside
+document.addEventListener('click', function(event) {
+if (!menuButton.contains(event.target) && !menuDropdown.contains(event.target)) {
+menuDropdown.classList.add('hidden');
+}
+});
+
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (SpeechRecognition) {
+        const recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.lang = 'en-US';
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+
+        voiceButton.addEventListener('click', () => {
+            recognition.start();
+            voiceButton.classList.add('animate-pulse');
+        });
+
+        recognition.onresult = function(event) {
+            const transcript = event.results[0][0].transcript;
+            messageInput.value = transcript;
+            messageInput.focus();
+        };
+
+        recognition.onend = function() {
+            voiceButton.classList.remove('animate-pulse');
+        };
+
+        recognition.onerror = function(event) {
+            console.error('Speech recognition error', event.error);
+            voiceButton.classList.remove('animate-pulse');
+        };
+    } else {
+        console.warn('Speech Recognition not supported in this browser.');
+        voiceButton.disabled = true;
+        voiceButton.title = "Voice input not supported";
+    }
+// Clear chat functionality
+const clearChat = document.getElementById('clearChat');
+clearChat.addEventListener('click', function() {
+const confirmDialog = document.createElement('div');
+confirmDialog.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+confirmDialog.innerHTML = `
+<div class="bg-white rounded-lg p-6 max-w-sm mx-4 w-full dark:bg-gray-800">
+<h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Clear Conversation</h3>
+<p class="text-gray-600 dark:text-gray-300 mb-6">Are you sure you want to clear all messages? This action cannot be undone.</p>
+<div class="flex justify-end space-x-3">
+<button class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded !rounded-button whitespace-nowrap dark:text-gray-300 dark:hover:bg-gray-700" onclick="this.closest('.fixed').remove()">Cancel</button>
+<button id="confirmClear" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 !rounded-button whitespace-nowrap">Clear</button>
+</div>
+</div>
+`;
+document.body.appendChild(confirmDialog);
+document.getElementById('confirmClear').addEventListener('click', function() {
+const chatContainer = document.querySelector('.chat-container');
+chatContainer.innerHTML = `
+<div class="flex items-start space-x-2 max-w-[80%]">
+<div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white flex-shrink-0">
+<i class="ri-robot-line"></i>
+</div>
+<div>
+<div class="bg-gray-50 p-3 rounded-lg rounded-tl-none shadow-sm">
+<p class="text-gray-800">Hello! I'm your AI assistant. How can I help you today?</p>
+</div>
+<div class="text-xs text-gray-500 mt-1">${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+</div>
+</div>
+`;
+confirmDialog.remove();
+menuDropdown.classList.add('hidden');
+});
+});
+
+// Export chat functionality
+const exportChat = document.getElementById('exportChat');
+exportChat.addEventListener('click', function () {
+  const chatContainer = document.querySelector('.chat-container');
+  let chatText = '';
+  const messages = chatContainer.children;
+
+  for (let message of messages) {
+    const timestamp = message.querySelector('.text-gray-500')?.textContent.trim();
+    const messageText = message.querySelector('p')?.textContent.trim();
+
+    // Determine if this message is from the user or the bot
+    const hasUserIcon = message.querySelector('.ri-user-line') !== null;
+    const hasBotIcon = message.querySelector('.ri-robot-line') !== null;
+
+    let sender = 'Unknown';
+    if (hasUserIcon && !hasBotIcon) {
+      sender = 'You';
+    } else if (hasBotIcon && !hasUserIcon) {
+      sender = 'Estatex AI';
+    }
+
+    if (messageText && timestamp) {
+      chatText += `[${timestamp}] ${sender}: ${messageText}\n\n`;
+    }
+  }
+
+  const blob = new Blob([chatText], { type: 'text/plain' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `chat-history-${new Date().toISOString().slice(0, 10)}.txt`;
+  a.click();
+  window.URL.revokeObjectURL(url);
+
+  // Hide menu dropdown after export
+  menuDropdown.classList.add('hidden');
+});
+
+
+// Search functionality
+const searchButton = document.getElementById('searchButton');
+const searchModal = document.getElementById('searchModal');
+const searchInput = document.getElementById('searchInput');
+const searchResults = document.getElementById('searchResults');
+const closeSearch = document.getElementById('closeSearch');
+searchButton.addEventListener('click', function() {
+    searchModal.classList.remove('hidden');
+    searchInput.focus();
+});
+closeSearch.addEventListener('click', function() {
+    searchModal.classList.add('hidden');
+    searchInput.value = '';
+    searchResults.innerHTML = '';
+});
+searchModal.addEventListener('click', function(e) {
+    if (e.target === searchModal) {
+        searchModal.classList.add('hidden');
+        searchInput.value = '';
+        searchResults.innerHTML = '';
+    }
+});
+searchInput.addEventListener('input', function() {
+    const searchTerm = this.value.toLowerCase().trim();
+    const chatContainer = document.querySelector('.chat-container');
+    const messages = chatContainer.children;
+    searchResults.innerHTML = '';
+    if (searchTerm === '') return;
+    let results = [];
+    for (let message of messages) {
+        const messageText = message.querySelector('p')?.textContent.trim().toLowerCase();
+        const timestamp = message.querySelector('.text-gray-500')?.textContent.trim();
+        const isUser = message.querySelector('.bg-primary') !== null;
+        if (messageText && messageText.includes(searchTerm)) {
+            results.push({
+                text: message.querySelector('p').textContent.trim(),
+                timestamp,
+                isUser
+            });
+        }
+    }
+    if (results.length === 0) {
+        searchResults.innerHTML = `
+            <div class="text-center py-4 text-gray-500">
+                No messages found
+            </div>
+        `;
+        return;
+    }
+    results.forEach(result => {
+        const resultElement = document.createElement('div');
+        resultElement.className = 'p-3 hover:bg-gray-50 rounded cursor-pointer';
+        resultElement.innerHTML = `
+            <div class="flex items-center gap-2 mb-1">
+                <div class="w-6 h-6 rounded-full ${result.isUser ? 'bg-gray-200' : 'bg-primary'} flex items-center justify-center ${result.isUser ? 'text-gray-600' : 'text-white'} flex-shrink-0">
+                    <i class="${result.isUser ? 'ri-user-line' : 'ri-robot-line'} text-sm"></i>
+                </div>
+                <span class="text-xs text-gray-500">${result.timestamp}</span>
+            </div>
+            <p class="text-gray-800 text-sm">${result.text}</p>
+        `;
+        resultElement.addEventListener('click', function() {
+            const messageElement = Array.from(messages).find(msg => 
+                msg.querySelector('p')?.textContent.trim() === result.text
+            );
+            if (messageElement) {
+                messageElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                messageElement.classList.add('highlight-message');
+                setTimeout(() => messageElement.classList.remove('highlight-message'), 2000);
+                searchModal.classList.add('hidden');
+                searchInput.value = '';
+                searchResults.innerHTML = '';
+            }
+        });
+        searchResults.appendChild(resultElement);
+    });
+});
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (message) {
+                // Display user's message
+                const currentTime = new Date();
+                const timeString = currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const userMessageHTML = `
+                    <div class="flex items-start justify-end space-x-2 max-w-[80%]">
+                        <div>
+                            <div class="bg-primary text-white p-3 rounded-lg rounded-tr-none">
+                                <p>${message.replace(/\n/g, '<br>')}</p>
+                            </div>
+                            <div class="text-xs text-gray-500 mt-1 flex justify-end items-center">
+                                ${timeString}
+                                <i class="ri-check-line ml-1 text-primary"></i>
+                            </div>
+                        </div>
+                        <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 flex-shrink-0">
+                            <i class="ri-user-line"></i>
+                        </div>
+                    </div>
+                `;
+                chatContainer.insertAdjacentHTML('beforeend', userMessageHTML);
+                messageInput.value = '';
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+    
+                // Typing indicator (simulated)
+                const typingIndicator = `
+                    <div class="flex items-start space-x-2 max-w-[80%]" id="typingIndicator">
+                        <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white flex-shrink-0">
+                            <i class="ri-robot-line"></i>
+                        </div>
+                        <div class="bg-gray-50 p-3 rounded-lg rounded-tl-none shadow-sm">
+                            <div class="typing-indicator">
+                                <span></span><span></span><span></span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                chatContainer.insertAdjacentHTML('beforeend', typingIndicator);
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+    
+                // Send message to backend (PHP)
+                try {
+                    const response = await fetch('chatbot_backend.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: 'message=' + encodeURIComponent(message),
+                    });
+                    const data = await response.json();
+                    document.getElementById('typingIndicator').remove(); // Remove typing indicator
+    
+                    // Display the chatbot response
+                    const botMessageHTML = `
+                        <div class="flex items-start space-x-2 max-w-[80%]">
+                            <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white flex-shrink-0">
+                                <i class="ri-robot-line"></i>
+                            </div>
+                            <div>
+                                <div class="bg-gray-50 p-3 rounded-lg rounded-tl-none shadow-sm">
+                                    <p class="text-gray-800">${data.reply.replace(/\n/g, '<br>')}</p>
+                                </div>
+                                <div class="text-xs text-gray-500 mt-1">${timeString}</div>
+                            </div>
+                        </div>
+                    `;
+                    chatContainer.insertAdjacentHTML('beforeend', botMessageHTML);
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                } catch (err) {
+                    document.getElementById('typingIndicator').remove();
+                    const errorMessage = `
+                        <div class="flex items-start space-x-2 max-w-[80%]">
+                            <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white flex-shrink-0">
+                                <i class="ri-robot-line"></i>
+                            </div>
+                            <div>
+                                <div class="bg-gray-50 p-3 rounded-lg rounded-tl-none shadow-sm">
+                                    <p class="text-gray-800">⚠ Error: Unable to reach the server.</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    chatContainer.insertAdjacentHTML('beforeend', errorMessage);
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                }
+            }
+            
+        }
+
+    </script>
+</body>
+
+</html>
